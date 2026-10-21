@@ -62,7 +62,39 @@ A base identifica os postos pelo CNPJ e pela razão social, ou seja, são dados 
 ---
 
 ## 3. Modelagem e Catálogo de Dados
-_Em construção._
+
+### 3.1 Modelo de dados: Esquema Estrela
+A camada Gold organiza os dados em um **esquema estrela**: uma tabela fato central com o preço de venda, ligada a cinco dimensões que descrevem **quando**, **onde**, **o quê**, **quem** e **qual bandeira**.
+
+**Grão da fato:** um preço de venda por posto, produto e dia de coleta.
+
+| Tabela | Tipo | Linhas | Chave |
+|---|---|---|---|
+| `gold_fato_preco` | Fato | 804.617 | — |
+| `gold_dim_tempo` | Dimensão | 274 | `data` |
+| `gold_dim_local` | Dimensão | 419 | `id_local` |
+| `gold_dim_produto` | Dimensão | 6 | `id_produto` |
+| `gold_dim_posto` | Dimensão | 8.706 | `id_posto` |
+| `gold_dim_bandeira` | Dimensão | 49 | `id_bandeira` |
+
+As chaves primárias e estrangeiras foram declaradas no Databricks e aparecem no catálogo (selo FK nas colunas da fato).
+
+📄 Diagrama completo e justificativa das escolhas: [`catalogo/modelo_estrela.md`](catalogo/modelo_estrela.md)
+
+### 3.2 Catálogo de Dados
+O catálogo descreve cada atributo das seis tabelas: tipo, descrição, domínio (mínimo e máximo dos números e categorias dos textos), obrigatoriedade e linhagem.
+
+📄 Catálogo completo: [`catalogo/catalogo_dados.md`](catalogo/catalogo_dados.md)
+
+Resumo dos domínios principais:
+
+| Atributo | Domínio |
+|---|---|
+| Período | 01/01/2025 a 31/12/2025 (274 dias com coleta, 12 meses) |
+| Cobertura | 5 regiões, 27 UFs, 419 municípios, 8.706 postos |
+| Produtos | Gasolina, gasolina aditivada, etanol, diesel, diesel S10, GNV |
+| Preço de venda | R$ 3,09 (etanol) a R$ 9,59 (gasolina aditivada) |
+| Bandeiras | 49, classificadas em: bandeira branca (33,1% dos preços), grandes distribuidoras (58,3%) e outras (8,6%) |
 
 ## 4. Carga (pipeline ETL)
 
@@ -72,7 +104,7 @@ O pipeline segue a **arquitetura medalhão**, em que cada camada é uma tabela D
 |---|---|---|---|
 | Bronze | `bronze_precos` | [`01_coleta_bronze`](notebooks/01_coleta_bronze.py) | Dado bruto, igual à fonte, todas as colunas como texto |
 | Silver | `silver_precos` | [`02_transformacao_silver`](notebooks/02_transformacao_silver.sql) | Dado limpo, tipado e sem duplicidade |
-| Gold | _em construção_ | _em construção_ | Modelo estrela para a análise |
+| Gold | `gold_fato_preco` + 5 dimensões | [`03_modelagem_gold`](notebooks/03_modelagem_gold.sql) | Modelo estrela para a análise |
 
 ### 4.1 Bronze → Silver: regras de transformação
 
@@ -109,6 +141,34 @@ Evidências:
 - Diagnóstico da Bronze: [`evidencias/05_diagnostico_bronze.png`](evidencias/05_diagnostico_bronze.png)
 - Contagem Bronze × Silver: [`evidencias/06_contagem_silver.png`](evidencias/06_contagem_silver.png)
 - Tipos das colunas da Silver: [`evidencias/07_tipos_silver.png`](evidencias/07_tipos_silver.png)
+
+### 4.2 Silver → Gold: carga do modelo estrela
+
+O notebook 03 cria as tabelas na seguinte ordem:
+
+1. Apaga a tabela fato antiga, para permitir recriar as dimensões sem conflito de chaves.
+2. Cria as cinco dimensões a partir dos valores distintos da Silver. As chaves `id_...` são geradas com `ROW_NUMBER` (chave substituta); a dimensão tempo usa a própria data como chave.
+3. Cria a tabela fato, trocando os textos da Silver pelos códigos das dimensões (JOIN).
+4. Declara as chaves primárias e estrangeiras.
+5. Confere se a fato tem o mesmo número de linhas da Silver.
+
+Regras de negócio aplicadas na Gold:
+
+| Regra | Onde | Descrição |
+|---|---|---|
+| G1 | `gold_dim_produto.grupo` | Gasolina comum + aditivada → GASOLINA; diesel + diesel S10 → DIESEL |
+| G2 | `gold_dim_bandeira.tipo_bandeira` | BRANCA → bandeira branca; VIBRA, RAIZEN e IPIRANGA → grande distribuidora; demais → outras distribuidoras |
+| G3 | `gold_dim_posto.revenda` | Se o mesmo CNPJ aparece com mais de um nome, fica um só |
+
+**Resultado:** a fato tem **804.617 linhas**, exatamente o mesmo número da Silver. Isso confirma que nenhum registro se perdeu na carga.
+
+Pipeline completo: **813.731** (Bronze) → **804.617** (Silver) → **804.617** (Gold).
+
+Evidências:
+- Contagem das tabelas Gold: [`evidencias/08_contagem_gold.png`](evidencias/08_contagem_gold.png)
+- Tabelas Gold no catálogo: [`evidencias/09_tabelas_gold_catalog.png`](evidencias/09_tabelas_gold_catalog.png)
+- Chaves estrangeiras da fato: [`evidencias/10_relacionamentos_gold.png`](evidencias/10_relacionamentos_gold.png)
+- Teste de consulta no modelo estrela: [`evidencias/11_consulta_estrela.png`](evidencias/11_consulta_estrela.png)
 
 ## 5. Análise
 ### 5.1 Qualidade dos dados
