@@ -65,7 +65,50 @@ A base identifica os postos pelo CNPJ e pela razão social, ou seja, são dados 
 _Em construção._
 
 ## 4. Carga (pipeline ETL)
-_Em construção._
+
+O pipeline segue a **arquitetura medalhão**, em que cada camada é uma tabela Delta no schema `workspace.combustiveis`:
+
+| Camada | Tabela | Notebook | O que contém |
+|---|---|---|---|
+| Bronze | `bronze_precos` | [`01_coleta_bronze`](notebooks/01_coleta_bronze.py) | Dado bruto, igual à fonte, todas as colunas como texto |
+| Silver | `silver_precos` | [`02_transformacao_silver`](notebooks/02_transformacao_silver.sql) | Dado limpo, tipado e sem duplicidade |
+| Gold | _em construção_ | _em construção_ | Modelo estrela para a análise |
+
+### 4.1 Bronze → Silver: regras de transformação
+
+Antes de limpar, o notebook 02 faz um **diagnóstico** da camada Bronze, de modo que cada regra é justificada por um número:
+
+| Diagnóstico | Resultado |
+|---|---|
+| Total de linhas na Bronze | 813.731 |
+| Linhas totalmente em branco | 9.114 |
+| `valor_de_compra` preenchido | 0 linhas (coluna vazia) |
+| Produtos diferentes | 6 (gasolina, gasolina aditivada, etanol, diesel, diesel S10, GNV) |
+| Bandeiras diferentes | 49 |
+| Duplicatas reais (posto + produto + dia) | 0 |
+| Unidade do GNV | escrita de dois jeitos: `R$ / m³` e `R$ / m3` |
+
+Regras aplicadas:
+
+| # | Regra | Motivo |
+|---|---|---|
+| R1 | Tirar espaços sobrando dos textos e transformar texto vazio em nulo | CNPJ e outros campos vêm com espaço na frente |
+| R2 | Deixar o CNPJ só com números | Padronizar a chave que identifica o posto |
+| R3 | Converter o preço de texto (`"5,59"`) para número (`5.59`) | Permitir cálculos |
+| R4 | Converter a data de texto (`19/06/2025`) para data | Permitir agrupar por mês |
+| R5 | Descartar `valor_de_compra` | Coluna 100% vazia |
+| R6 | Descartar as colunas de endereço | Não são usadas em nenhuma pergunta (minimização de dados) |
+| R7 | Remover linhas vazias, sem preço, com preço zero ou sem data | Os arquivos da ANP têm 9.114 linhas em branco |
+| R8 | Manter um único preço por posto, produto e dia | Proteção contra dupla contagem (hoje não há duplicatas) |
+| R9 | Corrigir o nome do arquivo de origem (`%20` → espaço) | Deixar a linhagem legível |
+| R10 | Padronizar a unidade do GNV (`R$ / m3` → `R$ / m³`) | A mesma unidade aparece escrita de dois jeitos |
+
+**Resultado:** a Silver tem **804.617 linhas**. A diferença para a Bronze (9.114) é exatamente o número de linhas em branco, ou seja, nenhum registro com dado real foi perdido.
+
+Evidências:
+- Diagnóstico da Bronze: [`evidencias/05_diagnostico_bronze.png`](evidencias/05_diagnostico_bronze.png)
+- Contagem Bronze × Silver: [`evidencias/06_contagem_silver.png`](evidencias/06_contagem_silver.png)
+- Tipos das colunas da Silver: [`evidencias/07_tipos_silver.png`](evidencias/07_tipos_silver.png)
 
 ## 5. Análise
 ### 5.1 Qualidade dos dados
