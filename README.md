@@ -26,7 +26,40 @@ As diferenças de preço entre regiões, bandeiras e combustíveis são grandes 
 ---
 
 ## 2. Coleta
-_Em construção._
+
+### Origem dos dados
+Os dados vêm do **Levantamento de Preços de Combustíveis (LPC)** da ANP, uma pesquisa semanal feita por empresa contratada pela agência, que registra o preço de venda praticado em uma amostra de postos de todo o país. A ANP publica os resultados no portal de dados abertos, agrupados por semestre.
+
+| Item | Valor |
+|---|---|
+| Fonte | ANP – Série Histórica de Preços de Combustíveis (Combustíveis Automotivos) |
+| Página | https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis |
+| Arquivos | `ca-2025-01.zip` (1º semestre) e `ca-2025-02.zip` (2º semestre) |
+| Data da coleta | 21/10/2026 |
+| Formato original | Um CSV dentro de cada .zip; separador `;`; codificação UTF-8; decimal com vírgula; data no formato dd/mm/aaaa |
+| Volume | **813.731 linhas** (429.523 no 1º semestre e 384.208 no 2º) e 16 colunas |
+| Licença | Creative Commons Attribution (CC-BY) |
+
+### Como a coleta foi feita
+1. Os dois arquivos .zip foram baixados manualmente do portal da ANP. Não foi necessário robô de coleta (web scraping), porque os dados são publicados em arquivo para download.
+2. Os arquivos foram enviados para um **volume** no Databricks (`workspace.combustiveis.raw`), uma pasta de armazenamento na nuvem.
+3. O notebook [`01_coleta_bronze`](notebooks/01_coleta_bronze.py) descompacta os arquivos, lê os CSVs e grava a tabela **`workspace.combustiveis.bronze_precos`** no formato Delta, sem alterar o conteúdo.
+
+### Persistência na nuvem
+Ao final da coleta, os dados estão persistidos em dois lugares no Databricks:
+- **Arquivos brutos:** volume `workspace.combustiveis.raw` (os .zip e os CSVs extraídos);
+- **Tabela Bronze:** `workspace.combustiveis.bronze_precos`, com 813.731 linhas.
+
+Evidências:
+- Workspace do Databricks: [`evidencias/01_workspace.png`](evidencias/01_workspace.png)
+- Arquivos no volume: [`evidencias/02_volume_raw_arquivos.png`](evidencias/02_volume_raw_arquivos.png)
+- Contagem de linhas por arquivo: [`evidencias/03_contagem_bronze.png`](evidencias/03_contagem_bronze.png)
+- Tabela Bronze no catálogo: [`evidencias/04_tabela_bronze_catalog.png`](evidencias/04_tabela_bronze_catalog.png)
+
+### Dados pessoais (LGPD)
+A base identifica os postos pelo CNPJ e pela razão social, ou seja, são dados de **pessoas jurídicas**, divulgados publicamente pela própria ANP. Não há dados de pessoas físicas. Mesmo assim, por cautela, os endereços são descartados na camada Silver (não são usados em nenhuma pergunta), e todas as análises são feitas de forma **agregada** (por estado, bandeira e mês), sem expor postos individualmente.
+
+---
 
 ## 3. Modelagem e Catálogo de Dados
 _Em construção._
