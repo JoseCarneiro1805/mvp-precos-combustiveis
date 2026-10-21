@@ -14,10 +14,10 @@ erDiagram
 
     gold_fato_preco {
         date data FK
-        bigint id_local FK
-        bigint id_produto FK
-        bigint id_posto FK
-        bigint id_bandeira FK
+        int id_local FK
+        int id_produto FK
+        int id_posto FK
+        int id_bandeira FK
         decimal valor_venda
     }
     gold_dim_tempo {
@@ -30,24 +30,24 @@ erDiagram
         int dia_semana
     }
     gold_dim_local {
-        bigint id_local PK
+        int id_local PK
         string regiao
         string uf
         string municipio
     }
     gold_dim_produto {
-        bigint id_produto PK
+        int id_produto PK
         string produto
         string unidade
         string grupo
     }
     gold_dim_posto {
-        bigint id_posto PK
+        int id_posto PK
         string cnpj
         string revenda
     }
     gold_dim_bandeira {
-        bigint id_bandeira PK
+        int id_bandeira PK
         string bandeira
         string tipo_bandeira
     }
