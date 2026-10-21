@@ -172,7 +172,44 @@ Evidências:
 
 ## 5. Análise
 ### 5.1 Qualidade dos dados
-_Em construção._
+
+A análise de qualidade está no notebook [`04_qualidade_dados`](notebooks/04_qualidade_dados.sql) e verifica, **atributo por atributo**, as dimensões de qualidade sobre os dados já limpos. Os problemas encontrados na camada Bronze (linhas em branco, coluna vazia, unidade escrita de dois jeitos) foram tratados antes, no notebook 02 (seção 4.1).
+
+| Dimensão | Como foi verificada | Resultado | Decisão |
+|---|---|---|---|
+| **Completude** | Nulos em cada um dos 11 atributos | 0 nulos em todos | Nenhuma ação |
+| **Unicidade** | Total de linhas × chaves distintas em todas as tabelas | Todas as chaves únicas; o grão da fato (posto + produto + dia) não se repete | Nenhuma ação |
+| **Consistência entre tabelas** | Códigos da fato sem par nas dimensões (órfãos) | 0 órfãos | Nenhuma ação |
+| **Consistência entre atributos** | Estado em mais de uma região; posto em mais de um município | Nenhum estado inconsistente; 3 postos (0,03%) em mais de um município | Mantidos (impacto desprezível) |
+| **Conformidade** | Cada regra de domínio do Catálogo de Dados | 0 valores fora do domínio; 27 UFs; datas dentro de 2025 e do semestre do arquivo | Nenhuma ação |
+| **Acurácia** | Preços atípicos pela regra do boxplot (Q1 − 1,5×IQR e Q3 + 1,5×IQR), por produto | De 0,6% a 2,6% de atípicos por produto | Mantidos (ver abaixo) |
+| **Atualidade e cobertura** | Dias de coleta, preços e postos por mês | 12 meses cobertos; agosto com cerca de 20% menos preços | Volume suficiente em todos os meses |
+
+**Preços atípicos por produto:**
+
+| Produto | Q1 | Q3 | Limite inferior | Limite superior | Atípicos abaixo | Atípicos acima | % atípicos |
+|---|---|---|---|---|---|---|---|
+| DIESEL | 5,89 | 6,38 | 5,16 | 7,12 | 0 | 1.980 | 2,30% |
+| DIESEL S10 | 5,94 | 6,39 | 5,27 | 7,07 | 10 | 3.509 | 2,43% |
+| ETANOL | 4,09 | 4,79 | 3,04 | 5,84 | 0 | 1.091 | 0,61% |
+| GASOLINA | 5,99 | 6,47 | 5,27 | 7,19 | 273 | 3.206 | 1,64% |
+| GASOLINA ADITIVADA | 6,19 | 6,68 | 5,46 | 7,42 | 106 | 2.574 | 1,62% |
+| GNV | 4,39 | 4,99 | 3,49 | 5,89 | 5 | 472 | 2,62% |
+
+**Por que os atípicos foram mantidos:** um valor fora do normal não é necessariamente um erro. Os 10 maiores preços de gasolina comum (R$ 9,29) estão em Barueri e Tatuí (SP) e, no caso de Barueri, se repetem semana após semana entre outubro e dezembro. Esse padrão estável indica o preço real de um posto específico, e não erro de digitação. Como representam menos de 3% dos registros de cada produto, os atípicos também não distorcem as médias de forma relevante.
+
+**Observações que afetam a análise:**
+- **393 postos trocaram de bandeira** durante o ano e 109 mudaram de nome. Isso confirma a decisão de modelar a bandeira em uma dimensão separada do posto: cada preço fica associado à bandeira daquele dia.
+- **Frequência de observação:** cada combinação posto + produto foi coletada em média 23 vezes no ano (mediana 22), e 64% delas foram coletadas 12 vezes ou mais. Isso permite acompanhar a variação de preço de cada posto ao longo do tempo (pergunta 5).
+
+**Conclusão:** depois da limpeza, a base não apresenta problemas que comprometam as respostas às perguntas de negócio.
+
+Evidências:
+- Completude: [`evidencias/12_qualidade_completude.png`](evidencias/12_qualidade_completude.png)
+- Unicidade: [`evidencias/13_qualidade_unicidade.png`](evidencias/13_qualidade_unicidade.png)
+- Conformidade: [`evidencias/14_qualidade_conformidade.png`](evidencias/14_qualidade_conformidade.png)
+- Preços atípicos: [`evidencias/15_qualidade_atipicos.png`](evidencias/15_qualidade_atipicos.png)
+- Cobertura mensal: [`evidencias/16_qualidade_cobertura_mensal.png`](evidencias/16_qualidade_cobertura_mensal.png)
 
 ### 5.2 Respostas às perguntas
 _Em construção._
