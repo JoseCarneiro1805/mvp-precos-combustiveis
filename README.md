@@ -212,13 +212,128 @@ Evidências:
 - Cobertura mensal: [`evidencias/16_qualidade_cobertura_mensal.png`](evidencias/16_qualidade_cobertura_mensal.png)
 
 ### 5.2 Respostas às perguntas
-_Em construção._
+
+As consultas, os gráficos e a discussão completa de cada pergunta estão no notebook [`05_analise`](notebooks/05_analise.sql). Abaixo, o resumo de cada resposta.
+
+#### Pergunta 1 – Onde abastecer?
+*Quais estados tiveram o maior e o menor preço médio de gasolina comum e de etanol em 2025, e qual a diferença percentual entre esses extremos?*
+
+| Produto | Mais caro | Mais barato | Diferença | Em um tanque de 50 L |
+|---|---|---|---|---|
+| Gasolina comum | AC – R$ 7,67 | PI – R$ 5,93 | **29,5%** | R$ 87,28 |
+| Etanol | AC – R$ 5,45 | MS – R$ 4,08 | **33,6%** | R$ 68,60 |
+
+O **Acre** é o mais caro nos dois produtos, e a região Norte concentra as gasolinas mais caras (AC, AM, RR e RO). O etanol é mais barato nos estados produtores do Centro-Sul (MS, SP, MT e MG). Em ambos os casos, o padrão é compatível com o peso da logística no preço final.
+
+![Preço médio por estado](evidencias/17_p1_grafico_preco_uf.png)
+
+Evidência dos extremos: [`evidencias/18_p1_extremos.png`](evidencias/18_p1_extremos.png)
+
+#### Pergunta 2 – Em qual posto abastecer?
+*Postos de bandeira branca praticam preços menores que os postos de grandes distribuidoras? Qual é a diferença média?*
+
+- **No país:** a bandeira branca é mais barata em 5 dos 6 produtos, de 2,8% a 4,6%. Na gasolina comum, a diferença é de **R$ 0,184/L (3,0%)**. A exceção é o GNV, em que a branca é 1,4% mais cara.
+- **Dentro de cada estado** (gasolina): a branca é mais barata em **20 dos 27 estados**, mas a diferença média entre estados é de apenas **R$ 0,061/L**. A média nacional é maior porque estados com muitos postos na amostra e grande vantagem da branca, como SP (R$ 0,35), pesam mais (efeito composição).
+- **Exceções:** em 7 estados a branca é igual ou mais cara, com destaque para o Amazonas (+R$ 0,57).
+
+**Resposta:** sim, na maioria dos casos, mas a vantagem é moderada e não vale para todos os estados.
+
+![Preço por tipo de bandeira](evidencias/19_p2_grafico_bandeiras.png)
+![Diferença por estado](evidencias/20_p2_grafico_diferenca_uf.png)
+
+Evidência do resumo por estado: [`evidencias/21_p2_resumo_estados.png`](evidencias/21_p2_resumo_estados.png)
+
+#### Pergunta 3 – Quando abastecer?
+*Como o preço médio evoluiu mês a mês em 2025 e em quais meses ocorreram as maiores variações?*
+
+- **Fevereiro** teve as três maiores altas do ano: diesel S10 **+4,74%**, etanol **+4,05%** e gasolina **+2,96%**. O movimento coincide com o aumento do ICMS fixo em 1º de fevereiro de 2025 (+R$ 0,10/L na gasolina, +R$ 0,06/L no diesel), mas a alta observada foi maior que o imposto.
+- **Março a agosto:** queda gradual. A maior queda foi a do diesel S10 em maio (**−2,40%**).
+- **Setembro a dezembro:** estabilidade, exceto pela alta do etanol em dezembro (+1,94%).
+- **No ano** (dezembro × janeiro): gasolina +0,31%, etanol +3,70%, diesel S10 −1,17%.
+
+**Resposta:** houve um único choque relevante (fevereiro). Fora dele, as variações mensais ficaram quase sempre abaixo de 1%.
+
+![Evolução mensal](evidencias/22_p3_grafico_evolucao.png)
+
+Evidências: [`evidencias/23_p3_maiores_variacoes.png`](evidencias/23_p3_maiores_variacoes.png) · [`evidencias/24_p3_acumulado_ano.png`](evidencias/24_p3_acumulado_ano.png)
+
+#### Pergunta 4 – Com qual combustível abastecer?
+*Em quais estados o etanol foi economicamente vantajoso em relação à gasolina (relação de preços ≤ 70%) e em quantos meses do ano?*
+
+| Situação | Estados |
+|---|---|
+| Etanol compensou o ano todo | **MS** (65,6%), **MT** (66,4%), **SP** (67,4%) |
+| Etanol compensou em parte do ano | **PR** (10 meses), **GO** (4), **MG** (3), **DF** (1) |
+| Gasolina compensou o ano todo | Os outros 20 estados |
+
+**Resposta:** o etanol só foi vantajoso no **Centro-Sul**, a região produtora. No Norte e no Nordeste, a gasolina compensou em todos os meses. O caso extremo é o Amapá, onde o etanol custou 90,2% do preço da gasolina.
+
+![Relação etanol/gasolina por estado](evidencias/25_p4_grafico_relacao_uf.png)
+
+Evidência: [`evidencias/26_p4_situacao_estados.png`](evidencias/26_p4_situacao_estados.png)
+
+#### Pergunta 5 – Os aumentos chegam mais rápido que as reduções?
+*Os postos repassam as reduções de preço com a mesma velocidade com que repassam os aumentos?*
+
+Comparando cada preço de gasolina com a coleta anterior do mesmo posto (203.788 comparações): 76,4% sem mudança, **13,3% reduções** (média de R$ 0,146) e **10,3% aumentos** (média de R$ 0,197). Os aumentos são menos frequentes, porém **35% maiores**. Fevereiro concentrou 5.116 aumentos, e a volta do preço foi diluída ao longo de seis meses.
+
+**Resposta: inconclusiva.** O padrão é **compatível** com o fenômeno "foguetes e penas" (sobe de uma vez, desce aos poucos), mas a base não tem o **custo** do posto (a coluna `valor_de_compra` veio vazia) nem as datas de reajuste das refinarias. Sem o custo, não dá para distinguir "repasse lento" de "custo que também caiu devagar".
+
+![Aumentos e reduções por mês](evidencias/28_p5_grafico_mensal.png)
+
+Evidência: [`evidencias/27_p5_aumentos_reducoes.png`](evidencias/27_p5_aumentos_reducoes.png)
 
 ### 5.3 Discussão geral
-_Em construção._
+
+**A hipótese foi confirmada:** as diferenças de preço são grandes o suficiente para justificar decisões orientadas por dados. Mas cada decisão pesa de forma muito diferente. Convertendo tudo para um **tanque de 50 litros de gasolina**:
+
+| Decisão | Diferença por tanque | Peso |
+|---|---|---|
+| **Onde** abastecer (estado) | R$ 87,28 | Muito alto |
+| **Com qual combustível** | Depende da região: o etanol compensa só no Centro-Sul | Alto, mas regional |
+| **Em qual posto** (bandeira) | R$ 3,05 a R$ 9,20 | Moderado |
+| **Quando** (pico × vale do ano) | R$ 9,25 | Baixo e concentrado em um mês |
+
+1. **A localização é o fator dominante:** a diferença entre estados é cerca de dez vezes maior que a de bandeira ou de época do ano. Para quem tem flexibilidade de rota, como frotas e transportadoras, planejar onde abastecer é a decisão que mais economiza.
+2. **A escolha do combustível é regional:** não existe resposta nacional. No Centro-Sul o etanol compete; no Norte e no Nordeste, não.
+3. **A bandeira branca é critério de desempate**, não regra.
+4. **O momento importou pouco em 2025**, exceto por um choque pontual em fevereiro.
+5. **A dinâmica sugere assimetria entre altas e quedas**, mas confirmá-la exige dados de custo que a base não tem.
+
+**Limitações gerais:** a pesquisa da ANP é uma amostra (419 municípios, 8,7 mil postos), e não um censo. As médias são simples, sem ponderação por volume vendido. A análise cobre apenas 2025.
 
 ## 6. Autoavaliação
-_Em construção._
+
+**1. Quais perguntas foram respondidas e quais não foram? Por quê?**
+
+| Pergunta | Situação | Comentário |
+|---|---|---|
+| 1 – Estados mais caros e mais baratos | ✅ Respondida | Os dados têm cobertura das 27 UFs em todos os meses |
+| 2 – Bandeira branca × grandes distribuidoras | ✅ Respondida, com ressalva | A comparação por estado mostrou que a média nacional superestima a vantagem da bandeira branca |
+| 3 – Evolução mês a mês | ✅ Respondida | Cobertura mensal equilibrada (análise de qualidade). Vale só para 2025 |
+| 4 – Etanol × gasolina (regra dos 70%) | ✅ Respondida | A regra dos 70% é uma aproximação; o rendimento real varia por veículo |
+| 5 – Repasse de altas e baixas | ⚠️ Inconclusiva | O padrão observado é compatível com a assimetria, mas falta a variável de custo para provar a causa |
+
+A pergunta 5 foi formulada já sabendo do risco de não ser respondida, e foi mantida intacta, como pede o enunciado. Um ponto aprendido: a análise de qualidade mostrou que a **frequência de coleta** era suficiente (cada posto observado em média 23 vezes no ano). O que impediu a resposta não foi o volume de dados, e sim a **ausência de uma variável**. Isso reforça a importância de mapear, ainda na fase de objetivo, quais variáveis cada pergunta exige.
+
+**2. Que limitações dos dados condicionaram os resultados?**
+- **Amostra, não censo:** o LPC cobre 419 municípios e cerca de 8,7 mil postos, então estados com poucos municípios pesquisados podem não estar bem representados.
+- **Sem volume vendido:** as médias tratam igualmente um posto de rodovia e um de bairro.
+- **Sem custo de aquisição:** a coluna `valor_de_compra` veio 100% vazia, o que inviabilizou a pergunta 5.
+- **Um único ano:** não permite falar em sazonalidade, só no comportamento de 2025.
+- **Problemas de formatação** na fonte (9.114 linhas em branco, decimal com vírgula, unidade do GNV escrita de dois jeitos), todos tratados na camada Silver.
+
+**3. Que decisões técnicas eu tomaria de outra forma?**
+- **Automatizar o download** dos arquivos da ANP dentro do pipeline, em vez do upload manual, para que a coleta também fosse reproduzível por código.
+- **Gerar os gráficos por código** (Python), em vez de pela interface do Databricks. Os gráficos da interface não ficam salvos no arquivo do notebook exportado para o GitHub.
+- Incluir desde o início uma **segunda fonte com o custo** (preços de distribuição da ANP), que teria permitido responder à pergunta 5.
+
+**4. Que extensões transformariam este MVP em uma solução de uso contínuo?**
+- **Carga incremental semanal:** a ANP publica o arquivo "Quatro últimas semanas", e um Job agendado poderia acrescentar os novos preços toda semana, em vez de recarregar o ano inteiro.
+- **Série histórica de vários anos**, para separar padrões sazonais de choques pontuais.
+- **Cruzamento com custos** de distribuição e reajustes das refinarias, para medir o repasse (pergunta 5).
+- **Painel (dashboard)** no Databricks para o usuário final, com filtros por estado, produto e bandeira, e um alerta de "etanol compensa no seu estado este mês".
+- **Ponderação por volume**, cruzando com os dados de vendas por estado também publicados pela ANP.
 
 ## 7. Licença
 - **Código:** MIT (ver arquivo `LICENSE`).
