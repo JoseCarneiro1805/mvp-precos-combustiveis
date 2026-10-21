@@ -4,6 +4,17 @@ Trabalho final de MVP – Departamento de Engenharia de Produção / UnB
 Autor: José Marcos Pereira Carneiro
 Plataforma: Databricks Free Edition
 
+> **Resumo:** pipeline de dados em nuvem (Databricks) que coleta 813 mil preços de combustíveis da ANP em 2025, limpa e modela os dados em esquema estrela e responde **onde, quando e com qual combustível se gasta menos**. Principal achado: a **localização** é o fator dominante (até R$ 87 de diferença por tanque entre estados), muito à frente da bandeira do posto ou da época do ano. O etanol só compensa no Centro-Sul.
+
+## Sumário
+1. [Objetivo](#1-objetivo)
+2. [Coleta](#2-coleta)
+3. [Modelagem e Catálogo de Dados](#3-modelagem-e-catálogo-de-dados)
+4. [Carga (pipeline ETL)](#4-carga-pipeline-etl)
+5. [Análise](#5-análise)
+6. [Autoavaliação](#6-autoavaliação)
+7. [Licença](#7-licença)
+
 ---
 
 ## 1. Objetivo
@@ -169,6 +180,30 @@ Evidências:
 - Tabelas Gold no catálogo: [`evidencias/09_tabelas_gold_catalog.png`](evidencias/09_tabelas_gold_catalog.png)
 - Chaves estrangeiras da fato: [`evidencias/10_relacionamentos_gold.png`](evidencias/10_relacionamentos_gold.png)
 - Teste de consulta no modelo estrela: [`evidencias/11_consulta_estrela.png`](evidencias/11_consulta_estrela.png)
+
+### 4.3 Pipeline automatizado (Job do Databricks)
+
+Os cinco notebooks foram encadeados em um **Job** do Databricks chamado `pipeline_precos_combustiveis`. Cada tarefa só começa quando a anterior termina com sucesso, de modo que o pipeline inteiro (da extração dos arquivos até as respostas) roda com **um único clique**:
+
+```
+01_coleta_bronze → 02_transformacao_silver → 03_modelagem_gold → 04_qualidade_dados → 05_analise
+```
+
+Como todas as tabelas são recriadas a cada execução (`overwrite` e `CREATE OR REPLACE`), o Job pode ser executado quantas vezes for preciso sem duplicar dados.
+
+Evidências:
+- Estrutura do Job: [`evidencias/29_job_pipeline.png`](evidencias/29_job_pipeline.png)
+- Execução concluída com sucesso: [`evidencias/30_job_execucao_sucesso.png`](evidencias/30_job_execucao_sucesso.png)
+
+### 4.4 Como reproduzir o pipeline
+
+1. Criar uma conta no **Databricks Free Edition**.
+2. Importar os 5 notebooks da pasta [`/notebooks`](notebooks) no Workspace (**Import**).
+3. Abrir o notebook `01_coleta_bronze` e rodar só as células do **Passo 1**, que criam o schema `combustiveis` e o volume `raw`.
+4. Baixar `ca-2025-01.zip` e `ca-2025-02.zip` do [portal da ANP](https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis) e enviá-los ao volume: **Catalog → workspace → combustiveis → Volumes → raw → Upload to this volume**.
+5. Executar os notebooks em ordem (01 a 05), ou criar o Job descrito na seção 4.3 e clicar em **Run now**.
+
+Os dados brutos não estão versionados neste repositório porque podem ser baixados diretamente da fonte oficial. A licença CC-BY permitiria a redistribuição.
 
 ## 5. Análise
 ### 5.1 Qualidade dos dados
